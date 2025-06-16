@@ -1,4 +1,3 @@
-/* 전체 페이지 기본 설정 */
 body {
     margin: 0;
     font-family: "Noto Sans KR", sans-serif;
@@ -6,25 +5,50 @@ body {
     color: #f5f5f5;
 }
 
-/* 헤더 영역 */
 header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
     text-align: center;
     padding: 20px;
     background-color: #1f1f1f;
     border-bottom: 1px solid #333;
 }
 
-header h1 {
+.title {
     margin: 0;
     color: #ff3c00;
-    cursor: pointer;
-    /* 클릭 가능하게 */
+    display: inline-block;
 }
 
-/* 검색창 컨테이너 */
+button {
+    margin-left: 10px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+#favorites-btn,
+#mbti-btn {
+    background-color: #3a3a3a;
+    color: #ff3c00;
+    border: 1px solid #ff3c00;
+}
+
+#favorites-btn:hover,
+#mbti-btn:hover {
+    background-color: #ff3c00;
+    color: white;
+}
+
 #search-container {
     display: flex;
     justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
     padding: 15px;
     background-color: #1f1f1f;
     border-bottom: 1px solid #333;
@@ -40,46 +64,38 @@ header h1 {
     border-radius: 4px;
 }
 
-#search-input::placeholder {
-    color: #ccc;
-}
-
 #search-btn {
-    padding: 8px 12px;
     margin-left: 8px;
-    font-size: 16px;
-    cursor: pointer;
-    border: none;
     background-color: #ff3c00;
     color: white;
-    border-radius: 4px;
 }
 
 #search-btn:hover {
     background-color: #e03200;
 }
 
-/* 영화 카드 컨테이너 */
-#movie-container {
+#movie-container,
+#favorites-container {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     padding: 20px;
 }
 
-/* 영화 카드 */
 .movie-card {
     width: 200px;
+    max-width: 240px;
     background: #1e1e1e;
     color: #f5f5f5;
     margin: 10px;
     padding: 10px;
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
-    cursor: pointer;
-    transform: translateY(20px);
-    opacity: 0;
-    animation: fadeInUp 0.5s ease forwards;
+    transition: transform 0.2s;
+}
+
+.movie-card:hover {
+    transform: scale(1.05);
 }
 
 .movie-card img {
@@ -87,42 +103,32 @@ header h1 {
     border-radius: 5px;
 }
 
-.movie-card:hover {
-    transform: scale(1.05);
+.fav-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #ff3c00;
+    cursor: pointer;
+    margin-top: 5px;
 }
 
-/* 카드 페이드인 애니메이션 */
-@keyframes fadeInUp {
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-/* 모달 영역 */
 .modal {
+    display: none;
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.7);
-    display: flex;
     justify-content: center;
     align-items: center;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
     z-index: 999;
 }
 
-/* 모달 활성화 */
 .modal.show {
-    opacity: 1;
-    pointer-events: auto;
+    display: flex;
 }
 
-/* 모달 내용 */
 .modal-content {
     background: #2a2a2a;
     color: #fff;
@@ -132,17 +138,183 @@ header h1 {
     border-radius: 10px;
     overflow-y: auto;
     max-height: 80%;
-    transform: scale(0.9);
-    transition: transform 0.3s ease;
 }
 
-.modal.show .modal-content {
-    transform: scale(1);
-}
-
-/* 닫기 버튼 */
 .close-btn {
     float: right;
     font-size: 24px;
     cursor: pointer;
+}
+
+#mbti-quiz {
+    display: none;
+    max-width: 500px;
+    margin: 40px auto;
+    background: #1e1e1e;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+#mbti-quiz h2 {
+    text-align: center;
+    color: #ff3c00;
+}
+
+.question {
+    margin-bottom: 20px;
+}
+
+.question p {
+    margin: 0 0 10px;
+}
+
+.question label {
+    display: block;
+    margin: 5px 0;
+}
+
+#submit-mbti {
+    display: block;
+    margin: 20px auto 0;
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    background-color: #ff3c00;
+    color: white;
+    cursor: pointer;
+}
+
+#submit-mbti:hover {
+    background-color: #e03200;
+}
+
+#top10-hover-box:hover #top10-list {
+    display: block;
+    position: absolute;
+    background: #1f1f1f;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+}
+
+#top10-list li {
+    color: #fff;
+    margin-bottom: 4px;
+    text-decoration: underline;
+    white-space: nowrap;
+}
+
+#chart-box {
+    position: fixed;
+    top: 100px;
+    right: 0;
+    width: 250px;
+    height: 400px;
+    display: flex;
+    transition: transform 0.4s ease;
+    transform: translateX(200px);
+    z-index: 999;
+}
+
+#chart-tab {
+    background-color: #ff3c00;
+    color: white;
+    padding: 10px;
+    cursor: pointer;
+    writing-mode: vertical-rl;
+    text-align: center;
+    font-weight: bold;
+    border-radius: 8px 0 0 8px;
+    user-select: none;
+}
+
+#chart-content {
+    background-color: #2a2a2a;
+    padding: 10px;
+    width: 200px;
+    overflow-y: auto;
+    border-radius: 10px 0 0 10px;
+    box-shadow: -3px 3px 10px rgba(0, 0, 0, 0.5);
+}
+
+#chart-list {
+    list-style: decimal;
+    padding-left: 20px;
+}
+
+#chart-list li {
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+#chart-box:hover {
+    transform: translateX(0);
+}
+
+
+/* 📱 반응형 스타일 */
+@media screen and (max-width: 480px) {
+    header {
+        flex-direction: column;
+    }
+
+    #search-container {
+        flex-direction: column;
+    }
+
+    #search-input,
+    #search-btn,
+    #favorites-btn,
+    #mbti-btn {
+        width: 90%;
+        margin: 6px 0;
+    }
+
+    .movie-card {
+        width: 90%;
+        margin: 10px auto;
+    }
+
+    #mbti-quiz {
+        width: 90%;
+    }
+
+    #chart-box {
+        display: none;
+    }
+}
+
+@media screen and (min-width: 481px) and (max-width: 768px) {
+    .movie-card {
+        width: 46%;
+        margin: 2%;
+    }
+
+    /*
+    #chart-box {
+        display: none;
+    }*/
+}
+
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+    .movie-card {
+        width: 30%;
+        margin: 1.66%;
+    }
+}
+
+@media screen and (min-width: 1025px) and (max-width: 1399px) {
+    .movie-card {
+        width: 22%;
+        margin: 1%;
+    }
+}
+
+@media screen and (min-width: 1400px) {
+    .movie-card {
+        width: 18%;
+        margin: 1%;
+    }
 }

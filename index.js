@@ -1,124 +1,79 @@
-// ✅ TMDb API 설정
-const API_KEY = "24b9dda7678c5412670e883aaac5c23f"; // TMDb API 키
+const API_KEY = "8075ef55495efe85d77cbea6c0d2cd86";
 const BASE_URL = "https://api.themoviedb.org/3";
 const IMG_URL = "https://image.tmdb.org/t/p/w500";
 
-// ✅ DOM 요소 선택
+const movieContainer = document.getElementById("movie-container");
+const favoritesContainer = document.getElementById("favorites-container");
+const quizSection = document.getElementById("mbti-quiz");
 const modal = document.getElementById("movie-modal");
-const container = document.getElementById("movie-container");
 const modalDetails = document.getElementById("modal-details");
 
-// ✅ TMDb 인기 영화 로드
-fetch(`${BASE_URL}/movie/popular?api_key=${API_KEY}&language=ko-KR`)
-    .then((res) => res.json())
-    .then((data) => {
-        const movies = data.results;
-
-        // overview가 없는 경우 영어로 다시 요청
-        const fetchEnglishOverviews = movies.map(async (movie) => {
-            if (!movie.overview) {
-                const res = await fetch(`${BASE_URL}/movie/${movie.id}?api_key=${API_KEY}&language=en-US`);
-                const engData = await res.json();
-                movie.overview = engData.overview || "No overview available.";
-            }
-            return movie;
+// 인기 영화 불러오기
+document.addEventListener("DOMContentLoaded", () => {
+    fetch(`${BASE_URL}/movie/popular?api_key=${API_KEY}&language=ko-KR`)
+        .then((res) => res.json())
+        .then((data) => {
+            displayMovies(data.results);
+            renderTop10List(data.results);
         });
+});
 
-        Promise.all(fetchEnglishOverviews).then((completedMovies) => {
-            displayMovies(completedMovies);
-        });
-    })
-    .catch((error) => {
-        console.log("TMDb 에러 발생", error);
-    });
-
-// ✅ TMDb 영화 카드 렌더링
 function displayMovies(movies) {
-    const title = document.createElement("h2");
-    title.innerText = "🔥 실시간 인기 영화 (TMDb)";
-    title.style.textAlign = "center";
-    title.style.marginTop = "30px";
-    container.before(title);
+    movieContainer.innerHTML = "";
+    movieContainer.style.display = "flex";
+    favoritesContainer.style.display = "none";
+    quizSection.style.display = "none";
 
-    container.innerHTML = "";
-    movies.forEach(function (movie, index) {
+    movies.forEach((movie) => {
         const card = document.createElement("div");
         card.className = "movie-card";
-
         card.innerHTML = `
-            <img src="${IMG_URL + movie.poster_path}" alt='${movie.title}'/>
-            <h3>${index + 1}위. ${movie.title}</h3>
-            <p>평점: ${movie.vote_average}</p>
-            <p>${movie.overview.substring(0, 80)}...</p>
-        `;
-        container.appendChild(card);
+      <img src="${IMG_URL + movie.poster_path}" alt="${movie.title}" />
+      <h3>${movie.title}</h3>
+      <p>평점: ${movie.vote_average}</p>
+      <button class="fav-btn">${isFavorited(movie.id) ? "❤️" : "🤍"}</button>
+    `;
 
-        card.addEventListener("click", () => {
-            showMovieModal(movie.id);
+        card.querySelector(".fav-btn").addEventListener("click", (e) => {
+            e.stopPropagation();
+            toggleFavorite(movie);
+            displayMovies(movies);
         });
+
+        card.addEventListener("click", () => showMovieModal(movie.id));
+        movieContainer.appendChild(card);
     });
 }
 
-// ✅ TMDb 상세 정보 모달
-function showMovieModal(movieId) {
-    fetch(`${BASE_URL}/movie/${movieId}?api_key=${API_KEY}&language=ko-KR`)
-        .then((res) => res.json())
-        .then((movie) => {
-            if (!movie.overview) {
-                fetch(`${BASE_URL}/movie/${movieId}?api_key=${API_KEY}&language=en-US`)
-                    .then((res) => res.json())
-                    .then((engMovie) => {
-                        movie.overview = engMovie.overview || "No overview available.";
-                        showModalContent(movie);
-                    })
-                    .catch((err) => {
-                        console.error("영어 개요 로딩 실패", err);
-                        movie.overview = "개요 정보를 불러올 수 없습니다.";
-                        showModalContent(movie);
-                    });
-            } else {
-                showModalContent(movie);
-            }
-        })
-        .catch((error) => console.error("상세 정보 로드 에러", error));
+function renderTop10List(movies) {
+    const top10 = [...movies]
+        .sort((a, b) => b.vote_average - a.vote_average)
+        .slice(0, 10);
+
+    const ul = document.getElementById("top10-list");
+    ul.innerHTML = "";
+
+    top10.forEach((movie, index) => {
+        const li = document.createElement("li");
+        li.textContent = `${index + 1}위. ${movie.title}`;
+        ul.appendChild(li);
+    });
 }
 
-// ✅ 모달 내용 렌더링
-function showModalContent(movie) {
-    modalDetails.innerHTML = `
-        <img src="${IMG_URL + movie.poster_path}" alt="${movie.title}" />
-        <h2>${movie.title}</h2>
-        <p><strong>개봉일:</strong> ${movie.release_date}</p>
-        <p><strong>평점:</strong> ${movie.vote_average}</p>
-        <p>${movie.overview}</p>
-    `;
-    modal.classList.remove("hidden");
-}
 
-// ✅ 모달 닫기
-document.querySelector(".close-btn").addEventListener("click", () => {
-    modal.classList.add("hidden");
-});
-
-// ✅ 검색 버튼 클릭 이벤트
+// 검색 기능
 document.getElementById("search-btn").addEventListener("click", () => {
     const query = document.getElementById("search-input").value.trim();
-    if (query) {
-        searchMovies(query);
+    if (query) searchMovies(query);
+});
+
+document.getElementById("search-input").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        const query = e.target.value.trim();
+        if (query) searchMovies(query);
     }
 });
 
-// ✅ 엔터 키로도 검색 가능
-document.getElementById("search-input").addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-        const query = event.target.value.trim();
-        if (query) {
-            searchMovies(query);
-        }
-    }
-});
-
-// ✅ 영화 검색 함수
 function searchMovies(query) {
     fetch(`${BASE_URL}/search/movie?api_key=${API_KEY}&language=ko-KR&query=${encodeURIComponent(query)}`)
         .then((res) => res.json())
@@ -126,79 +81,151 @@ function searchMovies(query) {
             if (data.results.length > 0) {
                 displayMovies(data.results);
             } else {
-                alert("검색 결과가 없습니다!");
+                alert("검색 결과가 없습니다.");
             }
         })
-        .catch((error) => {
-            console.error("검색 오류", error);
+        .catch((err) => {
+            console.error("검색 오류", err);
         });
 }
 
-////////////////////////////////////////
-// ✅ KOBIS 오픈 API 연동 시작
-////////////////////////////////////////
-
-// ✅ KOBIS API 래퍼 클래스 정의
-function KobisOpenAPIRestService(key, host) {
-    this.key = key;
-    this.host = host ? host : "https://www.kobis.or.kr";
-    this.DAILY_BOXOFFICE_URI = "/kobisopenapi/webservice/rest/boxoffice/searchDailyBoxOfficeList";
-}
-KobisOpenAPIRestService.prototype.requestGet = function (key, host, serviceURI, isJson, paramMap) {
-    const urlStr = host + serviceURI + (isJson ? ".json" : ".xml");
-    let retVal = null;
-    $.extend(paramMap, { key: this.key });
-    $.ajax({
-        type: "get",
-        url: urlStr,
-        data: paramMap,
-        success: function (responseData) {
-            retVal = responseData;
-        },
-        error: function (jqXHR, textStatus, err) {
-            console.error("KOBIS API 오류", jqXHR.responseText);
-        },
-        dataType: isJson ? "json" : "xml",
-        async: false
-    });
-    return retVal;
-};
-KobisOpenAPIRestService.prototype.getDailyBoxOffice = function (isJson, paramMap) {
-    return this.requestGet(this.key, this.host, this.DAILY_BOXOFFICE_URI, isJson, paramMap);
-};
-
-// ✅ 박스오피스 정보 표시 함수
-function displayKobisBoxOffice() {
-    const kobis = new KobisOpenAPIRestService("24b9dda7678c5412670e883aaac5c23f");
-
-    // 어제 날짜 (당일 데이터는 없기 때문에 -1일 처리)
-    const today = new Date();
-    today.setDate(today.getDate() - 1);
-    const dateStr = today.toISOString().slice(0, 10).replace(/-/g, "");
-
-    const data = kobis.getDailyBoxOffice(true, { targetDt: dateStr });
-    const list = data.boxOfficeResult.dailyBoxOfficeList;
-
-    const boxOfficeSection = document.createElement("div");
-    boxOfficeSection.innerHTML = `<h2 style="text-align:center; margin-top:30px;">🎬 KOBIS 박스오피스 Top 10</h2>`;
-    boxOfficeSection.style.display = "flex";
-    boxOfficeSection.style.flexWrap = "wrap";
-    boxOfficeSection.style.justifyContent = "center";
-
-    list.forEach((movie, index) => {
-        const box = document.createElement("div");
-        box.className = "movie-card";
-        box.innerHTML = `
-            <h3>${index + 1}위. ${movie.movieNm}</h3>
-            <p>개봉일: ${movie.openDt}</p>
-            <p>누적 관객수: ${Number(movie.audiAcc).toLocaleString()}명</p>
-        `;
-        boxOfficeSection.appendChild(box);
-    });
-
-    const container = document.getElementById("movie-container");
-    container.parentElement.insertBefore(boxOfficeSection, container);
+// 모달
+function showMovieModal(movieId) {
+    fetch(`${BASE_URL}/movie/${movieId}?api_key=${API_KEY}&language=ko-KR`)
+        .then((res) => res.json())
+        .then((movie) => {
+            modalDetails.innerHTML = `
+        <img src="${IMG_URL + movie.poster_path}" alt="${movie.title}" />
+        <h2>${movie.title}</h2>
+        <p><strong>개봉일:</strong> ${movie.release_date}</p>
+        <p><strong>평점:</strong> ${movie.vote_average}</p>
+        <p>${movie.overview}</p>
+      `;
+            modal.classList.add("show");
+        });
 }
 
-// ✅ 페이지 로딩 시 KOBIS 순위도 출력
-displayKobisBoxOffice();
+document.querySelector(".close-btn").addEventListener("click", () => {
+    modal.classList.remove("show");
+});
+
+// 찜하기
+function getFavorites() {
+    return JSON.parse(localStorage.getItem("favorites") || "[]");
+}
+
+function isFavorited(id) {
+    const favorites = getFavorites();
+    return favorites.some((m) => m.id === id);
+}
+
+function toggleFavorite(movie) {
+    let favorites = getFavorites();
+    if (isFavorited(movie.id)) {
+        favorites = favorites.filter((m) => m.id !== movie.id);
+    } else {
+        favorites.push(movie);
+    }
+    localStorage.setItem("favorites", JSON.stringify(favorites));
+}
+
+// 찜한 영화 보기
+document.getElementById("favorites-btn").addEventListener("click", () => {
+    const favorites = getFavorites();
+    movieContainer.style.display = "none";
+    quizSection.style.display = "none";
+    favoritesContainer.style.display = "flex";
+    favoritesContainer.innerHTML = "";
+
+    if (favorites.length === 0) {
+        favoritesContainer.innerHTML = "<p style='text-align:center; width:100%'>찜한 영화가 없습니다.</p>";
+        return;
+    }
+
+    favorites.forEach((movie) => {
+        const card = document.createElement("div");
+        card.className = "movie-card";
+        card.innerHTML = `
+      <img src="${IMG_URL + movie.poster_path}" alt="${movie.title}" />
+      <h3>${movie.title}</h3>
+      <p>평점: ${movie.vote_average}</p>
+      <button class="fav-btn">❤️</button>
+    `;
+        card.querySelector(".fav-btn").addEventListener("click", (e) => {
+            e.stopPropagation();
+            toggleFavorite(movie);
+            card.remove();
+        });
+        card.addEventListener("click", () => showMovieModal(movie.id));
+        favoritesContainer.appendChild(card);
+    });
+});
+
+// MBTI 추천
+document.getElementById("mbti-btn").addEventListener("click", () => {
+    movieContainer.style.display = "none";
+    favoritesContainer.style.display = "none";
+    quizSection.style.display = "block";
+});
+
+document.getElementById("submit-mbti").addEventListener("click", () => {
+    const q1 = document.querySelector("input[name='q1']:checked");
+    const q2 = document.querySelector("input[name='q2']:checked");
+    const q3 = document.querySelector("input[name='q3']:checked");
+
+    if (!q1 || !q2 || !q3) {
+        alert("모든 질문에 답해주세요.");
+        return;
+    }
+
+    const mbti = q1.value + q2.value + q3.value;
+    const typeToGenre = {
+        INF: 18,
+        INT: 27,
+        ENF: 10749,
+        ENT: 28,
+        ISF: 16,
+        EST: 35,
+        ESN: 14,
+        etc: 99,
+    };
+    const genreId = typeToGenre[mbti] || typeToGenre.etc;
+
+    fetch(`${BASE_URL}/discover/movie?api_key=${API_KEY}&with_genres=${genreId}&language=ko-KR`)
+        .then((res) => res.json())
+        .then((data) => {
+            if (data.results.length > 0) {
+                const movie = data.results[Math.floor(Math.random() * data.results.length)];
+                showMovieModal(movie.id);
+            } else {
+                alert("추천할 영화가 없습니다.");
+            }
+        });
+});
+
+// 로고 클릭 → 홈으로
+document.getElementById("logo").addEventListener("click", () => {
+    fetch(`${BASE_URL}/movie/popular?api_key=${API_KEY}&language=ko-KR`)
+        .then((res) => res.json())
+        .then((data) => displayMovies(data.results));
+});
+
+function loadTop10Chart() {
+    fetch(`${BASE_URL}/movie/popular?api_key=${API_KEY}&language=ko-KR&page=1`)
+        .then((res) => res.json())
+        .then((data) => {
+            const top10 = data.results.slice(0, 10);
+            const chartList = document.getElementById("chart-list");
+            chartList.innerHTML = "";
+
+            top10.forEach((movie, index) => {
+                const li = document.createElement("li");
+                li.textContent = `${movie.title}`;
+                chartList.appendChild(li);
+            });
+        })
+        .catch((err) => console.error("Top10 차트 로딩 오류", err));
+}
+
+// 🔃 페이지 로드시 자동 실행
+document.addEventListener("DOMContentLoaded", loadTop10Chart);
